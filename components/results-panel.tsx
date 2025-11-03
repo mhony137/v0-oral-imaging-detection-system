@@ -42,7 +42,7 @@ export function ResultsPanel({ result, isAnalyzing }: ResultsPanelProps) {
   const imageUrl = result.imageUrl
   const recommendations = result.recommendations || {}
   const disease = result.diseaseProbabilities?.[0]?.disease || "Unknown"
-  const confidence = result.diseaseProbabilities?.[0]?.probability || 0
+  const probability = result.diseaseProbabilities?.[0]?.probability || 0 // Renamed from confidence to probability
 
   return (
     <Card className="p-6 shadow-lg">
@@ -62,7 +62,7 @@ export function ResultsPanel({ result, isAnalyzing }: ResultsPanelProps) {
             <AlertCircle className="h-5 w-5 text-primary" />
             <AlertTitle className="text-base">Oral Lesion Detected</AlertTitle>
             <AlertDescription>
-              {disease} detected with {confidence.toFixed(1)}% confidence
+              {disease} detected with {probability.toFixed(1)}% linkage probability
             </AlertDescription>
           </Alert>
         ) : (
@@ -76,12 +76,23 @@ export function ResultsPanel({ result, isAnalyzing }: ResultsPanelProps) {
         {detections.length > 0 && (
           <>
             <div className="space-y-3">
-              <h3 className="text-base font-semibold text-foreground">Detected Lesion</h3>
+              <h3 className="text-base font-semibold text-foreground">Detected Lesions</h3>
+              <div className="space-y-2">
+                {detections.map((detection: any, idx: number) => (
+                  <div key={idx} className="rounded-lg border border-border bg-card p-4">
+                    <p className="font-medium text-foreground">{detection.type}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-base font-semibold text-foreground">Disease Probability</h3>
               <div className="rounded-lg border border-border bg-card p-4">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-foreground">{disease}</p>
                   <Badge variant="secondary" className="text-base px-3 py-1">
-                    {confidence.toFixed(1)}%
+                    {probability.toFixed(1)}%
                   </Badge>
                 </div>
               </div>

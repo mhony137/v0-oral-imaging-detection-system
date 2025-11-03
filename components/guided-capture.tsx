@@ -116,7 +116,28 @@ export function GuidedCapture({ onAnalysisComplete, isAnalyzing, setIsAnalyzing 
     try {
       console.log("[v0] Sending 8 images to backend for analysis")
       const result = await detectMultipleImages(capturedImages)
-      onAnalysisComplete(result)
+
+      const firstCapturedImage = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(capturedImages[0])
+      })
+
+      const detectionResult = {
+        imageUrl: firstCapturedImage,
+        detections: result.allDetections.map((d) => ({
+          type: d.label,
+          confidence: Math.round(d.confidence * 100) / 100,
+          bbox: { x: 0, y: 0, width: 0, height: 0 },
+        })),
+        diseaseProbabilities: result.diseaseProbabilities.map((dp) => ({
+          disease: dp.disease,
+          probability: dp.probability,
+          risk: dp.probability > 60 ? "High" : dp.probability > 30 ? "Medium" : "Low",
+        })),
+      }
+
+      onAnalysisComplete(detectionResult)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed")
       console.error("[v0] Analysis error:", err)

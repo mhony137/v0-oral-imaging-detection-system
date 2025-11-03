@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BoundingBoxViewer } from "./bounding-box-viewer"
-import { computeDiseaseProbabilities, type DetectedLesion } from "@/lib/disease-computation"
 
 interface HistoryScreenProps {
   onBack: () => void
@@ -21,7 +20,6 @@ interface HistoryItem {
   imageUrl: string
   detections: Array<{
     type: string
-    confidence: number
     bbox: { x: number; y: number; width: number; height: number }
   }>
   diseaseProbabilities: Array<{
@@ -133,7 +131,7 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                         <div className="flex flex-wrap gap-2">
                           {item.detections.map((detection, idx) => (
                             <Badge key={idx} variant="secondary">
-                              {detection.type} ({detection.confidence}%)
+                              {detection.type}
                             </Badge>
                           ))}
                         </div>
@@ -201,9 +199,6 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                       className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50"
                     >
                       <p className="font-medium text-foreground">{lesion.type}</p>
-                      <Badge variant="secondary" className="text-base px-3 py-1">
-                        {lesion.confidence}%
-                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -211,63 +206,24 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
 
               {selectedItem.diseaseProbabilities && selectedItem.diseaseProbabilities.length > 0 && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-foreground">Disease Probability</h3>
-                    <Badge variant="outline" className="text-xs">
-                      Adjusted Confidence
-                    </Badge>
-                  </div>
+                  <h3 className="text-base font-semibold text-foreground">Disease Linkage Probability</h3>
 
-                  {(() => {
-                    const detectedLesions: DetectedLesion[] = selectedItem.detections
-                    const diseaseComputations = computeDiseaseProbabilities(detectedLesions)
-
-                    return diseaseComputations.map((computation, index) => (
-                      <div
-                        key={index}
-                        className="rounded-lg border border-border bg-muted/30 p-4 transition-all hover:shadow-md"
-                      >
-                        <div className="mb-3 flex items-center justify-between">
-                          <h4 className="font-semibold text-foreground">{computation.disease}</h4>
-                          <Badge
-                            variant={computation.totalProbability > 50 ? "default" : "secondary"}
-                            className="text-base px-3 py-1"
-                          >
-                            {computation.totalProbability.toFixed(2)}%
-                          </Badge>
-                        </div>
-
-                        {computation.contributions.length > 0 && (
-                          <div className="space-y-2 border-t border-border pt-3">
-                            <p className="text-xs font-medium text-muted-foreground">Computation:</p>
-                            {computation.contributions.map((contrib, idx) => (
-                              <div key={idx} className="text-sm text-foreground">
-                                <p className="font-mono text-xs leading-relaxed text-muted-foreground">
-                                  {contrib.lesion} → {contrib.confidence} × {contrib.adjustmentFactor} ={" "}
-                                  {contrib.adjustedValue.toFixed(2)}
-                                  {contrib.sharedWith > 1 &&
-                                    ` ÷ ${contrib.sharedWith} = ${contrib.finalContribution.toFixed(2)}`}
-                                </p>
-                              </div>
-                            ))}
-                            {computation.contributions.length > 1 && (
-                              <p className="text-sm font-medium text-foreground pt-2 border-t border-border">
-                                Total:{" "}
-                                {computation.contributions.map((c) => c.finalContribution.toFixed(2)).join(" + ")} ={" "}
-                                {computation.totalProbability.toFixed(2)}%
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {computation.contributions.length === 0 && (
-                          <p className="text-sm text-muted-foreground border-t border-border pt-3">
-                            No contributing lesions detected → 0%
-                          </p>
-                        )}
+                  {selectedItem.diseaseProbabilities.map((disease, index) => (
+                    <div
+                      key={index}
+                      className="rounded-lg border border-border bg-muted/30 p-4 transition-all hover:shadow-md"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-foreground">{disease.disease}</h4>
+                        <Badge
+                          variant={disease.probability > 50 ? "default" : "secondary"}
+                          className="text-base px-3 py-1"
+                        >
+                          {disease.probability.toFixed(1)}%
+                        </Badge>
                       </div>
-                    ))
-                  })()}
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -303,7 +259,7 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
                                 variant={isHighRisk ? "destructive" : isMediumRisk ? "default" : "secondary"}
                                 className="text-sm px-3 py-1"
                               >
-                                {disease.probability.toFixed(1)}% Risk
+                                {disease.probability.toFixed(1)}% Probability
                               </Badge>
                             </div>
 

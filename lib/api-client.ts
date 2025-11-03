@@ -143,10 +143,17 @@ export interface AveragedDiagnostic {
   recommendation: string
 }
 
+import {
+  calculateDiseaseProbabilities,
+  normalizeLesionName,
+  type LinkageProbability,
+} from "./disease-probability-calculator"
+
 export async function detectMultipleImages(files: File[]): Promise<{
   allDetections: DiagnosticResult[]
   averagedDiagnostics: AveragedDiagnostic[]
   primaryDiagnosis: AveragedDiagnostic
+  diseaseProbabilities: LinkageProbability[]
 }> {
   console.log(`[PANGIL] Sending ${files.length} images to backend for analysis`)
 
@@ -187,10 +194,18 @@ export async function detectMultipleImages(files: File[]): Promise<{
     // Sort by averaged confidence (highest first)
     averagedDiagnostics.sort((a, b) => b.averagedConfidence - a.averagedConfidence)
 
+    const normalizedDetections = results.detections.map((detection: DiagnosticResult) => ({
+      lesion: normalizeLesionName(detection.label),
+      confidence: detection.confidence,
+    }))
+
+    const diseaseProbabilities = calculateDiseaseProbabilities(normalizedDetections)
+
     return {
       allDetections: results.detections,
       averagedDiagnostics,
       primaryDiagnosis: averagedDiagnostics[0],
+      diseaseProbabilities,
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error"

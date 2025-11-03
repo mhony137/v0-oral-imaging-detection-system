@@ -7,6 +7,7 @@ import { Upload, X, Scan } from "lucide-react"
 import Image from "next/image"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { detectLesion } from "@/lib/api-client"
+import { calculateDiseaseProbabilities, normalizeLesionName } from "@/lib/disease-probability-calculator"
 
 interface ImageUploadProps {
   onDetection: (result: any) => void
@@ -54,6 +55,13 @@ export function ImageUpload({ onDetection, isAnalyzing, setIsAnalyzing, userId }
       const result = await detectLesion(imageFile, userId)
       console.log("[v0] Detection result:", result)
 
+      const normalizedLesion = normalizeLesionName(result.label)
+      const detectedLesion = {
+        lesion: normalizedLesion,
+        confidence: result.confidence * 100,
+      }
+      const diseaseProbabilities = calculateDiseaseProbabilities([detectedLesion])
+
       // Convert FastAPI response to expected format
       const detections = [
         {
@@ -71,13 +79,11 @@ export function ImageUpload({ onDetection, isAnalyzing, setIsAnalyzing, userId }
       onDetection({
         imageUrl: selectedImage,
         detections,
-        diseaseProbabilities: [
-          {
-            disease: result.label,
-            probability: result.confidence * 100,
-            risk: result.confidence > 0.6 ? "High" : result.confidence > 0.3 ? "Medium" : "Low",
-          },
-        ],
+        diseaseProbabilities: diseaseProbabilities.map((dp) => ({
+          disease: dp.disease,
+          probability: dp.probability,
+          risk: dp.probability > 60 ? "High" : dp.probability > 30 ? "Medium" : "Low",
+        })),
         recommendations: result.recommendation,
         aiFeeback: result.ai_feedback,
         detectionImage: result.detection_image,

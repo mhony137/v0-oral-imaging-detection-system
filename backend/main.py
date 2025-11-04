@@ -13,7 +13,8 @@ from pathlib import Path
 import logging
 
 # Initialize FastAPI app
-app = FastAPI(title="PANGIL Backend", version="1.0.0")
+app = FastAPI(title="PANGIL Backe" \
+"nd", version="1.0.0")
 
 # Configure CORS for Vercel frontend
 app.add_middleware(

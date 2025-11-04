@@ -1,0 +1,8 @@
+# Railway.app deployment configuration
+# Use Railway dashboard to set environment variables
+
+# Environment variables to set in Railway:
+MODEL_PATH: /home/kerljann/yolo/lesion.pt
+FRONTEND_URL: https://pangil.vercel.app
+ENVIRONMENT: production
+STORAGE_DIR: /home/pi/PANGIL/detections
